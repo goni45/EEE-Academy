@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+:root {
+  --bg: 0 0% 4%;
+  --surface: 0 0% 8%;
+  --text: 0 0% 96%;
+  --muted: 0 0% 53%;
+  --stroke: 0 0% 12%;
+  --accent: 0 0% 96%;
+}
+
+@theme inline {
+  --color-bg: hsl(var(--bg));
+  --color-surface: hsl(var(--surface));
+  --color-text-primary: hsl(var(--text));
+  --color-muted: hsl(var(--muted));
+  --color-stroke: hsl(var(--stroke));
+  --font-body: var(--font-inter), var(--font-bengali), sans-serif;
+  --font-display: var(--font-instrument), var(--font-bengali), serif;
+}
+
+html {
+  background: hsl(var(--bg));
+  color: hsl(var(--text));
+  scroll-behavior: smooth;
+}
+
+body {
+  background: hsl(var(--bg));
+  color: hsl(var(--text));
+  font-family: var(--font-body);
+  min-height: 100dvh;
+}
+
+::selection {
+  background: #4e85bf55;
+  color: hsl(var(--text));
+}
+
+:focus-visible {
+  outline: 2px solid #89aacc;
+  outline-offset: 3px;
+}
+
+.accent-gradient {
+  background-image: linear-gradient(90deg, #89aacc 0%, #4e85bf 100%);
+}
+
+.accent-gradient-border {
+  background:
+    linear-gradient(hsl(var(--surface)), hsl(var(--surface))) padding-box,
+    linear-gradient(90deg, #89aacc 0%, #4e85bf 50%, #89aacc 100%) border-box;
+  background-size: 100% 100%, 200% 200%;
+  border: 1px solid transparent;
+}
+
+.accent-gradient-border:hover {
+  animation: gradient-shift 6s ease infinite;
+}
+
+@keyframes scroll-down {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+@keyframes role-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-scroll-down {
+  animation: scroll-down 1.5s ease-in-out infinite;
+}
+
+.halftone {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 0.6px, transparent 0.6px);
+  background-size: 4px 4px;
+}
+
+.field {
+  width: 100%;
+  border-radius: 9999px;
+  border: 1px solid hsl(var(--stroke));
+  background: hsl(var(--bg));
+  color: hsl(var(--text));
+  padding: 0.75rem 1rem;
+  min-height: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-scroll-down,
+  .accent-gradient-border:hover {
+    animation: none;
+  }
+}
