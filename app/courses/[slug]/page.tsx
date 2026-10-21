@@ -8,6 +8,7 @@ import { Em } from "@/components/ui/section-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { categoryLabel, getPublicCourseBySlug, getPublishedTeachers } from "@/lib/data";
 import { formatTaka, getDisplayPrice } from "@/lib/pricing";
+import { CheckCircle2, Clock, Globe, GraduationCap, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import { use, useState } from "react";
 
@@ -27,13 +28,17 @@ export default function CourseDetailPage({
         <Navbar />
         <main id="main" className="flex min-h-dvh items-center justify-center px-6 pt-28">
           <div className="text-center">
-            <h1 className="text-3xl text-text-primary">Course not found</h1>
-            <p className="mt-3 text-sm text-muted">This slug is not in the sample catalogue.</p>
-            <Link href="/courses" className="mt-6 inline-block text-sm text-text-primary">
+            <h1 className="text-3xl text-text-primary font-serif">Course not found</h1>
+            <p className="mt-3 text-sm text-muted">This slug is not in the course catalogue.</p>
+            <Link
+              href="/courses"
+              className="mt-6 inline-block rounded-full border border-stroke bg-surface px-6 py-2.5 text-sm text-text-primary hover:border-[#89AACC]"
+            >
               Back to courses
             </Link>
           </div>
         </main>
+        <Footer />
       </>
     );
   }
@@ -44,82 +49,180 @@ export default function CourseDetailPage({
     <>
       <Navbar />
       <main id="main" className="bg-bg pt-28 pb-20">
-        <div className="mx-auto max-w-[900px] px-6 md:px-10">
-          <Link href="/courses" className="text-sm text-muted hover:text-text-primary">
-            ← Courses
+        <div className="mx-auto max-w-[960px] px-6 md:px-10">
+          <Link
+            href="/courses"
+            className="inline-flex items-center gap-1.5 text-xs uppercase tracking-[0.15em] text-muted hover:text-text-primary transition"
+          >
+            ← সকল কোর্স ক্যাটালগ
           </Link>
-          <div className="mt-6 flex flex-wrap gap-2">
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             <StatusBadge label={categoryLabel(course.category)} />
             {course.semester ? <StatusBadge label={course.semester} /> : null}
             <StatusBadge
-              label={course.admission_open ? "Admission open" : "Admission closed"}
+              label={course.admission_open ? "ভর্তি চলছে (Open)" : "ভর্তি বন্ধ (Closed)"}
               tone={course.admission_open ? "open" : "closed"}
             />
           </div>
-          <h1 className="mt-6 text-4xl text-text-primary md:text-6xl">{course.title}</h1>
-          <p className="mt-4 max-w-2xl text-muted">{course.description}</p>
-          <p className="mt-6 text-2xl text-text-primary">
-            {formatTaka(price.current)}
-            {price.hasDiscount && price.original ? (
-              <span className="ml-3 text-lg text-muted line-through">{formatTaka(price.original)}</span>
-            ) : null}
+
+          <h1 className="mt-6 text-3xl md:text-5xl lg:text-6xl text-text-primary font-normal leading-tight">
+            {course.title}
+          </h1>
+
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">{course.description}</p>
+
+          {/* Pricing Card */}
+          <div className="mt-8 flex flex-wrap items-baseline gap-3 rounded-2xl border border-stroke bg-surface/50 p-6">
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl font-semibold text-text-primary tabular-nums">
+                {formatTaka(price.current)}
+              </span>
+              {price.hasDiscount && price.original ? (
+                <span className="text-lg text-muted line-through tabular-nums">
+                  {formatTaka(price.original)}
+                </span>
+              ) : null}
+            </div>
             <SampleHint>Sample price</SampleHint>
-          </p>
-          <dl className="mt-8 grid grid-cols-1 gap-4 text-sm md:grid-cols-2">
-            <div>
-              <dt className="text-muted">Duration</dt>
-              <dd className="text-text-primary">{course.duration}</dd>
+            <div className="ml-auto">
+              {course.admission_open ? (
+                <button
+                  type="button"
+                  onClick={() => setOpen(true)}
+                  className="rounded-full bg-text-primary px-7 py-3 text-sm font-medium text-bg transition hover:scale-[1.03] hover:bg-white accent-gradient-border"
+                >
+                  কোর্সটিতে ভর্তি হোন ↗
+                </button>
+              ) : (
+                <span className="rounded-full border border-stroke bg-bg px-5 py-2 text-xs text-muted">
+                  বর্তমানে এই ব্যাচে ভর্তি বন্ধ
+                </span>
+              )}
             </div>
-            <div>
-              <dt className="text-muted">Delivery</dt>
-              <dd className="text-text-primary">{course.delivery_format}</dd>
+          </div>
+
+          {/* Key Meta attributes */}
+          <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="flex items-center gap-3 rounded-2xl border border-stroke bg-surface/30 p-4">
+              <Clock className="h-5 w-5 text-[#89AACC]" />
+              <div>
+                <span className="block text-xs uppercase tracking-wider text-muted">সময়সীমা</span>
+                <span className="text-sm font-medium text-text-primary">{course.duration}</span>
+              </div>
             </div>
-            <div>
-              <dt className="text-muted">Department</dt>
-              <dd className="text-text-primary">{course.department}</dd>
+            <div className="flex items-center gap-3 rounded-2xl border border-stroke bg-surface/30 p-4">
+              <Globe className="h-5 w-5 text-[#89AACC]" />
+              <div>
+                <span className="block text-xs uppercase tracking-wider text-muted">ক্লাস ফরম্যাট</span>
+                <span className="text-sm font-medium text-text-primary">{course.delivery_format}</span>
+              </div>
             </div>
-          </dl>
+            <div className="flex items-center gap-3 rounded-2xl border border-stroke bg-surface/30 p-4">
+              <GraduationCap className="h-5 w-5 text-[#89AACC]" />
+              <div>
+                <span className="block text-xs uppercase tracking-wider text-muted">বিভাগ</span>
+                <span className="text-sm font-medium text-text-primary">{course.department} ডিপার্টমেন্ট</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Features */}
           {course.features.length > 0 ? (
-            <section className="mt-12">
+            <section className="mt-14">
               <h2 className="text-2xl text-text-primary">
-                What you <Em>get.</Em>
+                কোর্সে যা যা <Em>পাচ্ছেন।</Em>
               </h2>
-              <ul className="mt-4 space-y-2 text-sm text-muted">
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {course.features.map((feature) => (
-                  <li key={feature}>{feature}</li>
+                  <div
+                    key={feature}
+                    className="flex items-start gap-3 rounded-2xl border border-stroke bg-surface/20 p-4 text-sm text-text-primary/90"
+                  >
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-[#89AACC] mt-0.5" />
+                    <span>{feature}</span>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </section>
           ) : null}
+
+          {/* Syllabus */}
           {course.syllabus.length > 0 ? (
-            <section className="mt-12">
-              <h2 className="text-2xl text-text-primary">Syllabus</h2>
-              <ol className="mt-4 space-y-2 text-sm text-muted">
-                {course.syllabus.map((item) => (
-                  <li key={item}>{item}</li>
+            <section className="mt-14">
+              <h2 className="text-2xl text-text-primary">
+                কোর্স সিলেবাস ও <Em>টপিকস।</Em>
+              </h2>
+              <div className="mt-5 space-y-2.5">
+                {course.syllabus.map((item, idx) => (
+                  <div
+                    key={item}
+                    className="flex items-center gap-4 rounded-2xl border border-stroke bg-surface/20 px-5 py-3.5 text-sm text-text-primary/90"
+                  >
+                    <span className="font-mono text-xs text-[#89AACC]">
+                      Module {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <span>{item}</span>
+                  </div>
                 ))}
-              </ol>
+              </div>
             </section>
           ) : null}
+
+          {/* Mentors */}
           {teachers.length > 0 ? (
-            <section className="mt-12">
-              <h2 className="text-2xl text-text-primary">Mentors</h2>
-              <p className="mt-2 text-sm text-muted">
-                Published sample mentors associated with the academy catalogue.
-              </p>
+            <section className="mt-14">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl text-text-primary">
+                    কোর্স <Em>শিক্ষকমণ্ডলী।</Em>
+                  </h2>
+                  <p className="mt-1 text-sm text-muted">
+                    একাডেমির সংশ্লিষ্ট বিষয়ভিত্তিক মেন্টরদের পরিচিতি।
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {teachers.slice(0, 2).map((teacher) => (
+                  <div
+                    key={teacher.id}
+                    className="flex items-start gap-4 rounded-3xl border border-stroke bg-surface/40 p-5"
+                  >
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-stroke bg-bg text-lg font-serif italic text-[#89AACC]">
+                      {teacher.name.charAt(0)}
+                    </div>
+                    <div className="space-y-1">
+                      <h3 className="text-base font-medium text-text-primary">{teacher.name}</h3>
+                      <p className="text-xs text-[#89AACC] flex items-center gap-1">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        {teacher.institution_or_batch}
+                      </p>
+                      <p className="text-xs text-muted">{teacher.qualifications}</p>
+                      <p className="text-xs text-muted/80 line-clamp-2 mt-1">{teacher.bio}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </section>
           ) : null}
-          <div className="mt-12">
+
+          {/* Bottom Admission CTA */}
+          <div className="mt-16 rounded-3xl border border-stroke bg-surface/60 p-8 text-center space-y-4">
+            <h2 className="text-2xl text-text-primary">ভর্তির প্রস্তুতি শুরু করুন আজই</h2>
+            <p className="mx-auto max-w-md text-sm text-muted">
+              ইনকোয়ারি ফর্ম পূরণ করে একাডেমির অফিসিয়াল হোয়াটসঅ্যাপে মেসেজ পাঠিয়ে পেমেন্ট ও ব্যাচ শিডিউল জেনে নিন।
+            </p>
             {course.admission_open ? (
               <button
                 type="button"
                 onClick={() => setOpen(true)}
-                className="rounded-full bg-text-primary px-7 py-3.5 text-sm text-bg"
+                className="inline-block rounded-full bg-text-primary px-8 py-3.5 text-sm font-medium text-bg transition hover:scale-[1.03] hover:bg-white accent-gradient-border"
               >
-                Start inquiry
+                আবেদন ফর্ম পূরণ করুন ↗
               </button>
             ) : (
-              <p className="text-sm text-muted">Admission is closed. This course cannot accept new inquiries.</p>
+              <p className="text-sm text-muted">বর্তমানে এই কোর্সে ভর্তি বন্ধ রয়েছে।</p>
             )}
           </div>
         </div>

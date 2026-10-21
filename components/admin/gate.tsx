@@ -1,5 +1,6 @@
 "use client";
 
+import { safeGetSession } from "@/lib/safe-storage";
 import { useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 
@@ -8,7 +9,7 @@ function subscribe() {
 }
 
 function getSnapshot() {
-  return sessionStorage.getItem("eee-admin-prototype") === "1";
+  return safeGetSession("eee-admin-prototype") === "1";
 }
 
 function getServerSnapshot() {

@@ -1,0 +1,6 @@
+{
+  "name": "EEE Academy",
+  "description": "Diploma EEE engineering education platform, course catalogue, mentors, and class demos for polytechnic students.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

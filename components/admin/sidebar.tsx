@@ -2,6 +2,7 @@
 
 import { LogoMark } from "@/components/ui/logo-mark";
 import { cn } from "@/lib/cn";
+import { safeRemoveSession } from "@/lib/safe-storage";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -48,7 +49,7 @@ export function AdminSidebar() {
           type="button"
           className="rounded-full px-3 py-2 text-left text-sm text-muted hover:text-text-primary"
           onClick={() => {
-            sessionStorage.removeItem("eee-admin-prototype");
+            safeRemoveSession("eee-admin-prototype");
             router.push("/admin/login");
           }}
         >

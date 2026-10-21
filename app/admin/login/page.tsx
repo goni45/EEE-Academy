@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/ui/logo-mark";
 import { PrototypeMark } from "@/components/ui/prototype-mark";
+import { safeSetSession } from "@/lib/safe-storage";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -26,7 +27,7 @@ export default function AdminLoginPage() {
           className="mt-6 space-y-4"
           onSubmit={(event) => {
             event.preventDefault();
-            sessionStorage.setItem("eee-admin-prototype", "1");
+            safeSetSession("eee-admin-prototype", "1");
             router.push("/admin");
           }}
         >

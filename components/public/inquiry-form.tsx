@@ -5,7 +5,8 @@ import { SampleHint } from "@/components/ui/prototype-mark";
 import { getPublicCourses, submitInquiry } from "@/lib/data";
 import { formatTaka, getDisplayPrice } from "@/lib/pricing";
 import type { Course, InquiryInput } from "@/lib/types";
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 const empty: InquiryInput = {
   student_name: "",
@@ -53,7 +54,7 @@ export function InquiryForm({
     setPending(true);
     const result = submitInquiry(values);
     setPending(false);
-    if (!result.ok) {
+    if (!result.ok && "fieldErrors" in result) {
       setErrors(result.fieldErrors);
       const first = Object.keys(result.fieldErrors)[0];
       document.getElementById(first)?.focus();
@@ -249,24 +250,64 @@ export function InquiryModal({
   course?: Course | null;
   onClose: () => void;
 }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", handleKeyDown);
+
+    // Auto-focus first input
+    const timer = setTimeout(() => {
+      const firstInput = dialogRef.current?.querySelector<HTMLInputElement>("input:not([type=hidden]), select");
+      firstInput?.focus();
+    }, 50);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+      clearTimeout(timer);
+    };
+  }, [open, onClose]);
+
   if (!open) return null;
+
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 p-4 md:items-center">
+    <div
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/75 backdrop-blur-sm p-4 md:items-center"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="inquiry-title"
-        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-stroke bg-surface p-6"
+        className="max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-stroke bg-surface p-6 shadow-2xl transition-all"
       >
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-muted">Course inquiry</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-muted">ভর্তি সংক্রান্ত তথ্য</p>
             <h2 id="inquiry-title" className="mt-1 text-2xl text-text-primary">
-              Tell us about you
+              আপনার তথ্য প্রদান করুন
             </h2>
           </div>
-          <button type="button" onClick={onClose} className="text-sm text-muted">
-            Close
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-stroke bg-bg text-muted transition hover:border-[#89AACC] hover:text-text-primary"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
         <InquiryForm course={course} onClose={onClose} />

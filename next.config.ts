@@ -1,9 +1,17 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: [".monkeycode-ai.live"],
-  cacheComponents: true,
-  partialPrefetching: true,
+  output: "standalone",
+  allowedDevOrigins: [
+    ".monkeycode-ai.live",
+    "*.monkeycode-ai.live",
+    ".run.app",
+    "*.run.app",
+    ".asia-southeast1.run.app",
+    "*.asia-southeast1.run.app",
+    "localhost:3000",
+    "127.0.0.1:3000",
+  ],
   turbopack: {
     rules: {
       "*.css": {
