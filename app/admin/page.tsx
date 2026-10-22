@@ -1,9 +1,19 @@
 import { StatusBadge } from "@/components/ui/status-badge";
-import { getLeads, getOverviewCounts } from "@/lib/data";
+import { getLeads } from "@/lib/data";
+import { getAdminOverviewStatsAction } from "@/lib/actions/admin";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export default function AdminOverviewPage() {
-  const counts = getOverviewCounts();
-  const recent = getLeads().slice(0, 5);
+export default async function AdminOverviewPage() {
+  const counts = await getAdminOverviewStatsAction();
+  
+  const supabase = createAdminClient();
+  const { data: liveLeads } = await supabase
+    .from("course_leads")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(5);
+
+  const recent = liveLeads && liveLeads.length > 0 ? liveLeads : getLeads().slice(0, 5);
 
   const metrics = [
     { label: "Pending leads", value: counts.pendingLeads },
@@ -16,7 +26,7 @@ export default function AdminOverviewPage() {
   return (
     <div>
       <h1 className="text-3xl text-text-primary">Overview</h1>
-      <p className="mt-2 text-sm text-muted">Counts are derived from sample lead records.</p>
+      <p className="mt-2 text-sm text-muted">রিয়েল-টাইম ডাটাবেজ থেকে সংগৃহীত লাইভ স্ট্যাটিস্টিক্স।</p>
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         {metrics.map((metric) => (
           <article key={metric.label} className="rounded-3xl border border-stroke bg-surface p-5">

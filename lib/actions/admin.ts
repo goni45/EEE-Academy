@@ -132,3 +132,213 @@ export async function updateSiteSettingsAction(settings: Partial<SiteSettings>) 
     return { ok: false, error: message };
   }
 }
+
+function isUuid(id?: string): boolean {
+  if (!id) return false;
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+
+// -------------------------------------------------------------
+// Course Management Actions
+// -------------------------------------------------------------
+import type { Course, Teacher, ClassDemo } from "@/lib/types";
+
+export async function upsertCourseAction(course: Partial<Course>) {
+  const supabase = createAdminClient();
+  try {
+    const payload: Record<string, unknown> = {
+      title: course.title,
+      slug: course.slug || course.title?.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-"),
+      description: course.description || "",
+      department: course.department || "EEE",
+      category: course.category || "semester",
+      semester: course.semester || null,
+      regular_price: Number(course.regular_price) || 0,
+      discount_price: course.discount_price !== null && course.discount_price !== undefined ? Number(course.discount_price) : null,
+      features: course.features || [],
+      syllabus: course.syllabus || [],
+      duration: course.duration || "12 weeks",
+      delivery_format: course.delivery_format || "Live online classes",
+      is_active: course.is_active ?? true,
+      admission_open: course.admission_open ?? true,
+      order_index: course.order_index ?? 0,
+    };
+
+    if (isUuid(course.id)) {
+      payload.id = course.id;
+    }
+
+    const { data, error } = await supabase
+      .from("courses")
+      .upsert(payload, { onConflict: "slug" })
+      .select()
+      .single();
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    revalidatePath("/");
+    revalidatePath("/courses");
+    revalidatePath("/admin/courses");
+    return { ok: true, data: data as Course };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Course save failed";
+    return { ok: false, error: message };
+  }
+}
+
+export async function deleteCourseAction(id: string) {
+  const supabase = createAdminClient();
+  try {
+    const { error } = await supabase.from("courses").delete().eq("id", id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/");
+    revalidatePath("/courses");
+    revalidatePath("/admin/courses");
+    return { ok: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Delete failed";
+    return { ok: false, error: message };
+  }
+}
+
+// -------------------------------------------------------------
+// Teacher Management Actions
+// -------------------------------------------------------------
+export async function upsertTeacherAction(teacher: Partial<Teacher>) {
+  const supabase = createAdminClient();
+  try {
+    const payload: Record<string, unknown> = {
+      name: teacher.name,
+      qualifications: teacher.qualifications || "",
+      institution_or_batch: teacher.institution_or_batch || "",
+      expertise: teacher.expertise || "",
+      bio: teacher.bio || "",
+      photo_url: teacher.photo_url || null,
+      display_order: teacher.display_order ?? 0,
+      is_published: teacher.is_published ?? true,
+    };
+
+    if (isUuid(teacher.id)) {
+      payload.id = teacher.id;
+    }
+
+    const { data, error } = await supabase
+      .from("teachers")
+      .upsert(payload)
+      .select()
+      .single();
+
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/");
+    revalidatePath("/admin/teachers");
+    return { ok: true, data: data as Teacher };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Teacher save failed";
+    return { ok: false, error: message };
+  }
+}
+
+export async function deleteTeacherAction(id: string) {
+  const supabase = createAdminClient();
+  try {
+    const { error } = await supabase.from("teachers").delete().eq("id", id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/");
+    revalidatePath("/admin/teachers");
+    return { ok: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Delete failed";
+    return { ok: false, error: message };
+  }
+}
+
+// -------------------------------------------------------------
+// Class Demo Management Actions
+// -------------------------------------------------------------
+export async function upsertDemoAction(demo: Partial<ClassDemo>) {
+  const supabase = createAdminClient();
+  try {
+    const payload: Record<string, unknown> = {
+      title: demo.title,
+      topic: demo.topic || "",
+      description: demo.description || "",
+      teacher_id: isUuid(demo.teacher_id || "") ? demo.teacher_id : null,
+      video_url: demo.video_url || null,
+      thumbnail_url: demo.thumbnail_url || null,
+      display_order: demo.display_order ?? 0,
+      is_published: demo.is_published ?? true,
+    };
+
+    if (isUuid(demo.id)) {
+      payload.id = demo.id;
+    }
+
+    const { data, error } = await supabase
+      .from("class_demos")
+      .upsert(payload)
+      .select()
+      .single();
+
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/");
+    revalidatePath("/admin/demos");
+    return { ok: true, data: data as ClassDemo };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Demo save failed";
+    return { ok: false, error: message };
+  }
+}
+
+export async function deleteDemoAction(id: string) {
+  const supabase = createAdminClient();
+  try {
+    const { error } = await supabase.from("class_demos").delete().eq("id", id);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/");
+    revalidatePath("/admin/demos");
+    return { ok: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Delete failed";
+    return { ok: false, error: message };
+  }
+}
+
+// -------------------------------------------------------------
+// Admin Overview Real-Time Counters
+// -------------------------------------------------------------
+export async function getAdminOverviewStatsAction() {
+  const supabase = createAdminClient();
+  try {
+    const { data: leads, error } = await supabase
+      .from("course_leads")
+      .select("lead_status, payment_status, enrollment_status");
+
+    if (error || !leads) {
+      return {
+        pendingLeads: 0,
+        contactedLeads: 0,
+        submittedPayments: 0,
+        verifiedPayments: 0,
+        activeEnrollments: 0,
+      };
+    }
+
+    return {
+      pendingLeads: leads.filter((l) => l.lead_status === "pending").length,
+      contactedLeads: leads.filter((l) => l.lead_status === "contacted").length,
+      submittedPayments: leads.filter((l) => l.payment_status === "submitted").length,
+      verifiedPayments: leads.filter((l) => l.payment_status === "verified").length,
+      activeEnrollments: leads.filter((l) => l.enrollment_status === "active").length,
+    };
+  } catch {
+    return {
+      pendingLeads: 0,
+      contactedLeads: 0,
+      submittedPayments: 0,
+      verifiedPayments: 0,
+      activeEnrollments: 0,
+    };
+  }
+}

@@ -1,19 +1,35 @@
 "use client";
 
-import { getAllTeachers } from "@/lib/data";
+import { fetchPublishedTeachers, getAllTeachers } from "@/lib/data";
+import { upsertTeacherAction } from "@/lib/actions/admin";
 import type { Teacher } from "@/lib/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AdminTeachersPage() {
   const [rows, setRows] = useState<Teacher[]>(() => getAllTeachers());
   const [editing, setEditing] = useState<Teacher | null>(null);
 
-  function save(teacher: Teacher) {
+  useEffect(() => {
+    async function loadLive() {
+      const live = await fetchPublishedTeachers();
+      if (live && live.length > 0) {
+        setRows(live);
+      }
+    }
+    loadLive();
+  }, []);
+
+  async function save(teacher: Teacher) {
     setRows((current) => {
       const exists = current.some((item) => item.id === teacher.id);
       if (exists) return current.map((item) => (item.id === teacher.id ? teacher : item));
       return [...current, teacher];
     });
+
+    const res = await upsertTeacherAction(teacher);
+    if (res.ok && res.data) {
+      setRows((current) => current.map((item) => (item.id === teacher.id ? res.data! : item)));
+    }
     setEditing(null);
   }
 

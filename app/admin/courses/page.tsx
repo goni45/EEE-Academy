@@ -1,23 +1,39 @@
 "use client";
 
 import { StatusBadge } from "@/components/ui/status-badge";
-import { mockCourses } from "@/lib/mock/courses";
+import { fetchPublicCourses, getPublicCourses } from "@/lib/data";
+import { upsertCourseAction } from "@/lib/actions/admin";
 import { formatTaka, getDisplayPrice } from "@/lib/pricing";
 import type { Course, CourseCategory } from "@/lib/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AdminCoursesPage() {
-  const [rows, setRows] = useState<Course[]>(() =>
-    [...mockCourses].sort((a, b) => a.order_index - b.order_index),
-  );
+  const [rows, setRows] = useState<Course[]>(() => getPublicCourses());
   const [editing, setEditing] = useState<Course | null>(null);
 
-  function save(course: Course) {
+  useEffect(() => {
+    async function loadLive() {
+      const live = await fetchPublicCourses();
+      if (live && live.length > 0) {
+        setRows(live);
+      }
+    }
+    loadLive();
+  }, []);
+
+  async function save(course: Course) {
+    // Optimistic UI update
     setRows((current) => {
       const exists = current.some((item) => item.id === course.id);
       if (exists) return current.map((item) => (item.id === course.id ? course : item));
       return [...current, course];
     });
+
+    // Supabase persistence
+    const res = await upsertCourseAction(course);
+    if (res.ok && res.data) {
+      setRows((current) => current.map((item) => (item.id === course.id || item.slug === res.data!.slug ? res.data! : item)));
+    }
     setEditing(null);
   }
 

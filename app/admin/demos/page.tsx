@@ -1,20 +1,38 @@
 "use client";
 
-import { getAllDemos, getAllTeachers } from "@/lib/data";
-import type { ClassDemo } from "@/lib/types";
-import { useState } from "react";
+import { fetchPublishedDemos, fetchPublishedTeachers, getAllDemos, getAllTeachers } from "@/lib/data";
+import { upsertDemoAction } from "@/lib/actions/admin";
+import type { ClassDemo, Teacher } from "@/lib/types";
+import { useEffect, useState } from "react";
 
 export default function AdminDemosPage() {
   const [rows, setRows] = useState<ClassDemo[]>(() => getAllDemos());
-  const [teachers] = useState(() => getAllTeachers());
+  const [teachers, setTeachers] = useState<Teacher[]>(() => getAllTeachers());
   const [editing, setEditing] = useState<ClassDemo | null>(null);
 
-  function save(demo: ClassDemo) {
+  useEffect(() => {
+    async function loadLive() {
+      const [liveDemos, liveTeachers] = await Promise.all([
+        fetchPublishedDemos(),
+        fetchPublishedTeachers(),
+      ]);
+      if (liveDemos && liveDemos.length > 0) setRows(liveDemos);
+      if (liveTeachers && liveTeachers.length > 0) setTeachers(liveTeachers);
+    }
+    loadLive();
+  }, []);
+
+  async function save(demo: ClassDemo) {
     setRows((current) => {
       const exists = current.some((item) => item.id === demo.id);
       if (exists) return current.map((item) => (item.id === demo.id ? demo : item));
       return [...current, demo];
     });
+
+    const res = await upsertDemoAction(demo);
+    if (res.ok && res.data) {
+      setRows((current) => current.map((item) => (item.id === demo.id ? res.data! : item)));
+    }
     setEditing(null);
   }
 
