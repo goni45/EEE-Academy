@@ -85,17 +85,17 @@ export default function CourseDetailPage({
               ) : null}
             </div>
             <SampleHint>Sample price</SampleHint>
-            <div className="ml-auto">
+            <div className="w-full sm:w-auto sm:ml-auto mt-4 sm:mt-0">
               {course.admission_open ? (
                 <button
                   type="button"
                   onClick={() => setOpen(true)}
-                  className="rounded-full bg-text-primary px-7 py-3 text-sm font-medium text-bg transition hover:scale-[1.03] hover:bg-white accent-gradient-border"
+                  className="w-full sm:w-auto text-center rounded-full bg-text-primary px-7 py-3 text-sm font-medium text-bg transition hover:scale-[1.03] hover:bg-white accent-gradient-border cursor-pointer"
                 >
                   কোর্সটিতে ভর্তি হোন ↗
                 </button>
               ) : (
-                <span className="rounded-full border border-stroke bg-bg px-5 py-2 text-xs text-muted">
+                <span className="inline-block w-full sm:w-auto text-center rounded-full border border-stroke bg-bg px-5 py-2 text-xs text-muted">
                   বর্তমানে এই ব্যাচে ভর্তি বন্ধ
                 </span>
               )}

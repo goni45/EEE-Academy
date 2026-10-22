@@ -3,6 +3,7 @@
 import { LogoMark } from "@/components/ui/logo-mark";
 import { PrototypeMark } from "@/components/ui/prototype-mark";
 import { cn } from "@/lib/cn";
+import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -27,16 +28,21 @@ export function Navbar() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 md:pt-6 px-4">
+    <header className="fixed top-0 left-0 right-0 z-50 flex justify-center pt-4 md:pt-6 px-4 pointer-events-none">
       <nav
         className={cn(
-          "inline-flex max-w-full items-center rounded-full border border-white/10 bg-surface/90 px-2 py-2 backdrop-blur-md",
-          scrolled && "shadow-[0_12px_40px_rgba(0,0,0,0.45)]",
+          "pointer-events-auto inline-flex items-center rounded-full backdrop-blur-md border border-white/10 bg-[#141414]/90 px-2 py-1.5 sm:px-2.5 sm:py-2 transition-all duration-300",
+          scrolled ? "shadow-xl shadow-black/40 border-white/15" : "shadow-md shadow-black/10",
         )}
         aria-label="Primary"
       >
         <LogoMark />
-        <div className="mx-2 hidden items-center md:flex">
+
+        {/* Divider (hidden on very small screens) */}
+        <div className="hidden sm:block w-px h-5 bg-[#1f1f1f] mx-1 shrink-0" />
+
+        {/* Desktop Nav Links */}
+        <div className="hidden md:flex items-center gap-1 sm:gap-1.5">
           {links.map((link) => {
             const active =
               link.href === "/"
@@ -49,10 +55,10 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "rounded-full px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm transition-colors",
+                  "text-xs sm:text-sm rounded-full px-3 sm:px-4 py-1.5 sm:py-2 transition-colors cursor-pointer whitespace-nowrap",
                   active
-                    ? "bg-stroke/50 text-text-primary"
-                    : "text-muted hover:bg-stroke/50 hover:text-text-primary",
+                    ? "bg-[#1f1f1f]/50 text-[#f5f5f5] font-medium"
+                    : "text-[#878787] hover:text-[#f5f5f5] hover:bg-[#1f1f1f]/50",
                 )}
               >
                 {link.label}
@@ -60,40 +66,59 @@ export function Navbar() {
             );
           })}
         </div>
+
+        {/* Prototype label */}
         <div className="mx-2 hidden lg:block">
           <PrototypeMark compact />
         </div>
+
+        {/* Divider */}
+        <div className="hidden sm:block w-px h-5 bg-[#1f1f1f] mx-1 shrink-0" />
+
+        {/* Right CTA Button matching demo front */}
         <Link
           href="/courses"
-          className="ml-1 hidden rounded-full bg-surface px-4 py-2 text-xs text-text-primary accent-gradient-border sm:inline-flex sm:text-sm"
+          className="relative group text-xs sm:text-sm rounded-full px-3 sm:px-4 py-1.5 sm:py-2 cursor-pointer transition-all shrink-0"
         >
-          ভর্তি সম্পর্কে জানুন ↗
+          <span className="absolute -inset-[1.5px] rounded-full accent-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <span className="relative z-10 flex items-center gap-1 text-[#f5f5f5] group-hover:text-white font-medium bg-[#141414] rounded-full px-3 py-1 -mx-2 -my-0.5">
+            <span>ভর্তি সম্পর্কে জানুন</span>
+            <span className="text-[11px] opacity-70 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200">
+              ↗
+            </span>
+          </span>
         </Link>
+
+        {/* Mobile menu trigger */}
         <button
           type="button"
-          className="ml-1 rounded-full px-3 py-2 text-xs text-muted md:hidden"
+          className="ml-1 flex items-center justify-center w-8 h-8 rounded-full text-[#878787] hover:text-[#f5f5f5] hover:bg-[#1f1f1f] md:hidden cursor-pointer"
           onClick={() => setOpen((value) => !value)}
           aria-expanded={open}
           aria-controls="mobile-nav"
+          aria-label="Toggle navigation menu"
         >
-          Menu
+          {open ? <X size={18} /> : <Menu size={18} />}
         </button>
       </nav>
+
+      {/* Mobile drawer */}
       {open ? (
         <div
           id="mobile-nav"
-          className="absolute top-20 left-4 right-4 rounded-3xl border border-white/10 bg-surface/95 p-4 backdrop-blur-md md:hidden"
+          className="pointer-events-auto absolute top-20 left-4 right-4 rounded-3xl border border-white/10 bg-[#141414]/95 p-5 shadow-2xl backdrop-blur-xl md:hidden"
         >
-          <div className="mb-3">
+          <div className="mb-4 pb-3 border-b border-[#1f1f1f] flex items-center justify-between">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#878787]">Menu</span>
             <PrototypeMark compact />
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1.5">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className="rounded-full px-4 py-3 text-sm text-muted hover:bg-stroke/50 hover:text-text-primary"
+                className="rounded-full px-4 py-3 text-sm text-[#878787] hover:bg-[#1f1f1f]/60 hover:text-[#f5f5f5] transition-colors"
               >
                 {link.label}
               </Link>
@@ -101,7 +126,7 @@ export function Navbar() {
             <Link
               href="/courses"
               onClick={() => setOpen(false)}
-              className="mt-2 rounded-full bg-text-primary px-4 py-3 text-center text-sm text-bg"
+              className="mt-3 rounded-full bg-[#f5f5f5] px-4 py-3 text-center text-sm font-medium text-[#0a0a0a] hover:bg-white transition-colors"
             >
               ভর্তি সম্পর্কে জানুন ↗
             </Link>

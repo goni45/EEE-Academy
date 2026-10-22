@@ -6,17 +6,15 @@ export function LogoMark({ className }: { className?: string }) {
     <Link
       href="/"
       className={cn(
-        "group relative flex h-10 w-10 items-center justify-center rounded-full transition-transform duration-300 hover:scale-110",
+        "group relative w-9 h-9 rounded-full p-[1.5px] transition-transform duration-300 hover:scale-110 flex items-center justify-center shrink-0",
         className,
       )}
       aria-label="EEE Academy home"
     >
-      <span
-        className="absolute inset-0 rounded-full accent-gradient transition-transform duration-500 group-hover:rotate-180"
-        aria-hidden
-      />
-      <span className="absolute inset-[2px] rounded-full bg-surface" />
-      <span className="relative font-display italic text-xs text-text-primary">Ee</span>
+      <div className="absolute inset-0 rounded-full accent-gradient transition-all duration-500 group-hover:rotate-180" />
+      <div className="relative w-full h-full rounded-full bg-[#0a0a0a] flex items-center justify-center text-[#f5f5f5] font-display italic text-[12px] tracking-wider leading-none select-none">
+        EEE
+      </div>
     </Link>
   );
 }

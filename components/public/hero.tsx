@@ -1,7 +1,7 @@
 "use client";
 
 import { HeroVideo } from "@/components/public/hero-video";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import gsap from "gsap";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -16,23 +16,21 @@ export function Hero() {
   useEffect(() => {
     if (reduced || !rootRef.current) return;
     const ctx = gsap.context(() => {
-      gsap.fromTo(
+      const tl = gsap.timeline({
+        defaults: { ease: "power3.out" },
+      });
+
+      tl.fromTo(
         ".name-reveal",
         { opacity: 0, y: 50 },
-        { opacity: 1, y: 0, duration: 1.2, delay: 0.1, ease: "power3.out" },
+        { opacity: 1, y: 0, duration: 1.2, delay: 0.1 },
       );
-      gsap.fromTo(
+
+      tl.fromTo(
         ".blur-in",
-        { opacity: 0, y: 20, filter: "blur(10px)" },
-        {
-          opacity: 1,
-          y: 0,
-          filter: "blur(0px)",
-          duration: 1,
-          stagger: 0.1,
-          delay: 0.3,
-          ease: "power3.out",
-        },
+        { opacity: 0, filter: "blur(10px)", y: 20 },
+        { opacity: 1, filter: "blur(0px)", y: 0, duration: 1, stagger: 0.1 },
+        0.3,
       );
     }, rootRef);
     return () => ctx.revert();
@@ -48,52 +46,74 @@ export function Hero() {
   return (
     <section
       ref={rootRef}
-      className="relative flex min-h-dvh items-center justify-center overflow-hidden px-6"
+      id="hero"
+      className="relative w-full min-h-screen flex flex-col justify-center items-center overflow-hidden bg-[#0a0a0a] px-6 text-center select-none"
     >
       <HeroVideo />
-      <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
-        <p className="blur-in mb-8 text-xs uppercase tracking-[0.3em] text-muted">
+
+      {/* Hero Content (centered, z-10) */}
+      <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center pt-24 pb-20">
+        {/* Eyebrow */}
+        <p className="blur-in text-xs text-[#878787] uppercase tracking-[0.3em] mb-8 font-medium">
           DIPLOMA EEE • LEARN WITH CONFIDENCE
         </p>
-        <h1 className="name-reveal max-w-5xl text-3xl leading-tight text-text-primary sm:text-5xl md:text-6xl lg:text-7xl">
+
+        {/* Heading Reveal */}
+        <h1 className="name-reveal text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-display italic leading-[1] tracking-tight text-[#f5f5f5] mb-6">
           পলিটেকনিক EEE পড়াশোনায় প্রস্তুতি হোক আরও গোছানো
         </h1>
-        <div className="mt-6 h-8 overflow-hidden font-display italic text-lg text-text-primary md:text-2xl" aria-live="polite">
-          <AnimatePresence mode="wait">
-            <motion.p
-              key={roles[roleIndex]}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
-            >
-              {roles[roleIndex]}
-            </motion.p>
-          </AnimatePresence>
+
+        {/* Rotating study-focus line */}
+        <div className="blur-in text-base sm:text-lg md:text-xl text-[#878787] font-light mb-4">
+          <span>প্রস্তুতি হোক </span>
+          <span
+            key={roleIndex}
+            className="font-display italic text-[#f5f5f5] animate-role-fade-in inline-block text-lg sm:text-xl md:text-2xl px-1"
+          >
+            {roles[roleIndex]}
+          </span>
+          <span>-এর জন্য</span>
         </div>
-        <p className="blur-in mt-8 mb-12 max-w-md text-sm leading-relaxed text-muted md:text-base">
+
+        {/* Description */}
+        <p className="blur-in text-sm md:text-base text-[#878787] max-w-md mb-12 leading-relaxed font-light">
           নিজের সেমিস্টারের কোর্স দেখুন, শিক্ষকদের সঙ্গে পরিচিত হন এবং বাস্তব ক্লাস ডেমো দেখে পড়ানোর ধরন বুঝে নিন।
         </p>
-        <div className="blur-in flex flex-col items-center gap-3 sm:flex-row">
+
+        {/* CTA Buttons matching demo front */}
+        <div className="blur-in inline-flex flex-wrap justify-center items-center gap-4">
+          {/* Primary CTA: Solid light button with hover dark swap and accent gradient border */}
           <Link
             href="/courses"
-            className="rounded-full bg-text-primary px-7 py-3.5 text-sm text-bg transition-transform hover:scale-[1.04] hover:bg-bg hover:text-text-primary accent-gradient-border"
+            className="group relative rounded-full text-sm font-medium px-7 py-3.5 transition-all duration-300 hover:scale-105 cursor-pointer overflow-hidden"
           >
-            সব কোর্স দেখুন
+            <span className="absolute inset-0 rounded-full accent-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <span className="relative z-10 block rounded-full bg-[#f5f5f5] text-[#0a0a0a] group-hover:bg-[#0a0a0a] group-hover:text-[#f5f5f5] px-7 py-3.5 -mx-7 -my-3.5 transition-colors duration-300">
+              সব কোর্স দেখুন
+            </span>
           </Link>
+
+          {/* Secondary CTA: Dark button with border-2 and hover accent gradient border */}
           <Link
             href="/#demos"
-            className="rounded-full border-2 border-stroke bg-bg px-7 py-3.5 text-sm text-text-primary transition-transform hover:scale-[1.04] accent-gradient-border"
+            className="group relative rounded-full text-sm font-medium px-7 py-3.5 transition-all duration-300 hover:scale-105 cursor-pointer"
           >
-            ক্লাস ডেমো দেখুন
+            <span className="absolute inset-0 rounded-full accent-gradient opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <span className="relative z-10 block rounded-full border-2 border-[#1f1f1f] bg-[#0a0a0a] text-[#f5f5f5] group-hover:border-transparent px-7 py-3.5 -mx-7 -my-3.5 transition-all duration-300">
+              ক্লাস ডেমো দেখুন
+            </span>
           </Link>
         </div>
       </div>
-      <div className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-3">
-        <span className="text-xs uppercase tracking-[0.2em] text-muted">SCROLL</span>
-        <span className="relative h-10 w-px overflow-hidden bg-stroke">
-          <span className="absolute inset-x-0 h-4 bg-text-primary animate-scroll-down" />
+
+      {/* Scroll Indicator matching demo front */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none z-10">
+        <span className="text-[10px] text-[#878787] uppercase tracking-[0.2em] font-medium">
+          SCROLL
         </span>
+        <div className="relative w-px h-10 bg-[#1f1f1f] overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-[#f5f5f5] animate-scroll-down" />
+        </div>
       </div>
     </section>
   );

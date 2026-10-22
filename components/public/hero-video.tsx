@@ -1,80 +1,67 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import Hls from "hls.js";
+import { useEffect, useRef } from "react";
 
 const HLS_URL =
   process.env.NEXT_PUBLIC_HERO_HLS_URL ??
   "https://stream.mux.com/Aa02T7oM1wH5Mk5EEVDYhbZ1ChcdhRsS2m1NYyx4Ua1g.m3u8";
 
-function shouldPreferPoster() {
-  if (typeof window === "undefined") return false;
-  return (
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-    window.matchMedia("(max-width: 768px)").matches
-  );
-}
-
 export function HeroVideo() {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [failed, setFailed] = useState(false);
-  const [preferPoster] = useState(shouldPreferPoster);
 
   useEffect(() => {
-    if (preferPoster) return;
     const video = videoRef.current;
     if (!video) return;
-    let hls: { destroy: () => void } | null = null;
-    let cancelled = false;
 
-    const setup = async () => {
-      try {
-        if (video.canPlayType("application/vnd.apple.mpegurl")) {
-          video.src = HLS_URL;
-          await video.play().catch(() => undefined);
-          return;
-        }
-        const { default: Hls } = await import("hls.js");
-        if (!Hls.isSupported()) {
-          if (!cancelled) setFailed(true);
-          return;
-        }
-        const instance = new Hls();
-        hls = instance;
-        instance.loadSource(HLS_URL);
-        instance.attachMedia(video);
-        instance.on(Hls.Events.ERROR, () => {
-          if (!cancelled) setFailed(true);
-        });
-        await video.play().catch(() => undefined);
-      } catch {
-        if (!cancelled) setFailed(true);
+    let hlsInstance: Hls | null = null;
+
+    if (Hls.isSupported()) {
+      const hls = new Hls({
+        enableWorker: true,
+        lowLatencyMode: true,
+      });
+      hlsInstance = hls;
+
+      hls.loadSource(HLS_URL);
+      hls.attachMedia(video);
+
+      hls.on(Hls.Events.MANIFEST_PARSED, () => {
+        video.play().catch(() => {});
+      });
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = HLS_URL;
+      video.addEventListener("loadedmetadata", () => {
+        video.play().catch(() => {});
+      });
+    }
+
+    return () => {
+      if (hlsInstance) {
+        hlsInstance.destroy();
       }
     };
-
-    void setup();
-    return () => {
-      cancelled = true;
-      hls?.destroy();
-    };
-  }, [preferPoster]);
+  }, []);
 
   return (
-    <div className="absolute inset-0 overflow-hidden" aria-hidden>
-      {!failed && !preferPoster ? (
-        <video
-          ref={videoRef}
-          className="h-full w-full object-cover object-center"
-          autoPlay
-          muted
-          loop
-          playsInline
-          onError={() => setFailed(true)}
-        />
-      ) : (
-        <div className="h-full w-full bg-[radial-gradient(circle_at_30%_20%,#1a2a3d,transparent_45%),radial-gradient(circle_at_80%_80%,#132033,transparent_40%),hsl(var(--bg))]" />
-      )}
+    <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden>
+      {/* Video Element from demo front */}
+      <video
+        ref={videoRef}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        className="absolute top-1/2 left-1/2 min-w-full min-h-full w-auto h-auto object-cover -translate-x-1/2 -translate-y-1/2 opacity-70"
+      />
+
+      {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/20" />
-      <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-bg to-transparent" />
+
+      {/* Bottom gradient fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/70 to-transparent" />
     </div>
   );
 }
+
