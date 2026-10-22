@@ -3,9 +3,10 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { SampleHint } from "@/components/ui/prototype-mark";
 import { Em, SectionHeader } from "@/components/ui/section-header";
-import { getPublishedDemos, getTeacherById } from "@/lib/data";
+import { fetchPublishedDemos, getPublishedDemos, getTeacherById } from "@/lib/data";
+import type { ClassDemo } from "@/lib/types";
 import { ArrowUpRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const demoImages = [
   "/images/journal_typography_editorial_1792604009966.jpg",
@@ -13,8 +14,18 @@ const demoImages = [
 ];
 
 export function ClassDemos() {
-  const demos = getPublishedDemos();
+  const [demos, setDemos] = useState<ClassDemo[]>(() => getPublishedDemos());
   const [openId, setOpenId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadLiveDemos() {
+      const live = await fetchPublishedDemos();
+      if (live && live.length > 0) {
+        setDemos(live);
+      }
+    }
+    loadLiveDemos();
+  }, []);
 
   return (
     <section id="demos" className="bg-[#0a0a0a] py-16 md:py-24 border-t border-[#1f1f1f]/60 relative">

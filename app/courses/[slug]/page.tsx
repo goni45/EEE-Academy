@@ -6,11 +6,12 @@ import { Navbar } from "@/components/public/navbar";
 import { SampleHint } from "@/components/ui/prototype-mark";
 import { Em } from "@/components/ui/section-header";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { categoryLabel, getPublicCourseBySlug, getPublishedTeachers } from "@/lib/data";
+import { categoryLabel, fetchPublicCourseBySlug, getPublicCourseBySlug, getPublishedTeachers } from "@/lib/data";
 import { formatTaka, getDisplayPrice } from "@/lib/pricing";
+import type { Course } from "@/lib/types";
 import { CheckCircle2, Clock, Globe, GraduationCap, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { use, useState } from "react";
+import { use, useEffect, useState } from "react";
 
 export default function CourseDetailPage({
   params,
@@ -18,9 +19,17 @@ export default function CourseDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
-  const course = getPublicCourseBySlug(slug);
+  const [course, setCourse] = useState<Course | null>(() => getPublicCourseBySlug(slug));
   const [open, setOpen] = useState(false);
   const teachers = getPublishedTeachers();
+
+  useEffect(() => {
+    async function loadLiveCourse() {
+      const live = await fetchPublicCourseBySlug(slug);
+      if (live) setCourse(live);
+    }
+    loadLiveCourse();
+  }, [slug]);
 
   if (!course) {
     return (

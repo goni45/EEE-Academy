@@ -4,12 +4,12 @@ import { CourseCard } from "@/components/public/course-card";
 import { InquiryModal } from "@/components/public/inquiry-form";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Em } from "@/components/ui/section-header";
-import { categoryLabel, getPublicCourses } from "@/lib/data";
-import type { CourseCategory } from "@/lib/types";
+import { categoryLabel, fetchPublicCourses, getPublicCourses } from "@/lib/data";
+import type { Course, CourseCategory } from "@/lib/types";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const categories: Array<{ value: "all" | CourseCategory; label: string }> = [
   { value: "all", label: "All Courses" },
@@ -26,18 +26,41 @@ export function CoursesDirectory() {
   );
   const [semester, setSemester] = useState<"all" | string>("all");
   const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [allCourses, setAllCourses] = useState<Course[]>(() => getPublicCourses());
 
-  const courses = useMemo(
-    () => getPublicCourses({ category, semester }),
-    [category, semester],
-  );
+  useEffect(() => {
+    async function loadLiveCourses() {
+      const live = await fetchPublicCourses();
+      if (live && live.length > 0) {
+        setAllCourses(live);
+      }
+    }
+    loadLiveCourses();
+  }, []);
+
+  const courses = useMemo(() => {
+    return allCourses
+      .filter((c) => c.is_active)
+      .filter((c) => {
+        if (!category || category === "all") return true;
+        return c.category === category;
+      })
+      .filter((c) => {
+        if (!semester || semester === "all") return true;
+        return c.semester === semester;
+      })
+      .sort((a, b) => a.order_index - b.order_index);
+  }, [allCourses, category, semester]);
 
   const semesters = useMemo(() => {
     const values = new Set(
-      getPublicCourses({ category }).map((course) => course.semester).filter(Boolean),
+      allCourses
+        .filter((c) => !category || category === "all" || c.category === category)
+        .map((course) => course.semester)
+        .filter(Boolean),
     );
     return Array.from(values) as string[];
-  }, [category]);
+  }, [allCourses, category]);
 
   return (
     <div className="py-8 md:py-12">

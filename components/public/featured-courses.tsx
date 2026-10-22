@@ -1,10 +1,10 @@
 import { CourseCard } from "@/components/public/course-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Em, SectionHeader } from "@/components/ui/section-header";
-import { getFeaturedCourses } from "@/lib/data";
+import { fetchFeaturedCourses } from "@/lib/data";
 
-export function FeaturedCourses() {
-  const courses = getFeaturedCourses();
+export async function FeaturedCourses() {
+  const courses = await fetchFeaturedCourses();
 
   return (
     <section className="bg-bg py-12 md:py-16">

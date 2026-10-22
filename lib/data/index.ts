@@ -165,3 +165,113 @@ export function categoryLabel(category: CourseCategory) {
       return "Job preparation";
   }
 }
+
+// -------------------------------------------------------------
+// Live Supabase Async Fetchers (with graceful fallback to mocks)
+// -------------------------------------------------------------
+import { createClient } from "@/lib/supabase/client";
+
+export async function fetchPublicCourses(filters: CourseFilters = {}): Promise<Course[]> {
+  try {
+    const supabase = createClient();
+    let query = supabase
+      .from("courses")
+      .select("*")
+      .eq("is_active", true)
+      .order("order_index", { ascending: true });
+
+    if (filters.category && filters.category !== "all") {
+      query = query.eq("category", filters.category);
+    }
+    if (filters.semester && filters.semester !== "all") {
+      query = query.eq("semester", filters.semester);
+    }
+
+    const { data, error } = await query;
+    if (!error && data && data.length > 0) {
+      return data as Course[];
+    }
+  } catch (err) {
+    console.warn("fetchPublicCourses notice:", err);
+  }
+  return getPublicCourses(filters);
+}
+
+export async function fetchFeaturedCourses(): Promise<Course[]> {
+  const courses = await fetchPublicCourses();
+  return courses.slice(0, 4);
+}
+
+export async function fetchPublicCourseBySlug(slug: string): Promise<Course | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("slug", slug)
+      .eq("is_active", true)
+      .maybeSingle();
+
+    if (!error && data) {
+      return data as Course;
+    }
+  } catch (err) {
+    console.warn("fetchPublicCourseBySlug notice:", err);
+  }
+  return getPublicCourseBySlug(slug);
+}
+
+export async function fetchPublishedTeachers(): Promise<Teacher[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("teachers")
+      .select("*")
+      .eq("is_published", true)
+      .order("display_order", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      return data as Teacher[];
+    }
+  } catch (err) {
+    console.warn("fetchPublishedTeachers notice:", err);
+  }
+  return getPublishedTeachers();
+}
+
+export async function fetchPublishedDemos(): Promise<ClassDemo[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("class_demos")
+      .select("*")
+      .eq("is_published", true)
+      .order("display_order", { ascending: true });
+
+    if (!error && data && data.length > 0) {
+      return data as ClassDemo[];
+    }
+  } catch (err) {
+    console.warn("fetchPublishedDemos notice:", err);
+  }
+  return getPublishedDemos();
+}
+
+export async function fetchPublicSettings(): Promise<SiteSettings> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("site_settings")
+      .select("*")
+      .limit(1)
+      .maybeSingle();
+
+    if (!error && data) {
+      return data as SiteSettings;
+    }
+  } catch (err) {
+    console.warn("fetchPublicSettings notice:", err);
+  }
+  return getPublicSettings();
+}
+

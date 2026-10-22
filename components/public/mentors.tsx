@@ -1,15 +1,15 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { SampleHint } from "@/components/ui/prototype-mark";
 import { Em, SectionHeader } from "@/components/ui/section-header";
-import { getPublishedTeachers } from "@/lib/data";
+import { fetchPublishedTeachers } from "@/lib/data";
 
 const mentorImages = [
   "/images/work_human_perspective_1792603992650.jpg",
   "/images/exploration_glass_refraction_1792604010449.jpg",
 ];
 
-export function Mentors() {
-  const teachers = getPublishedTeachers();
+export async function Mentors() {
+  const teachers = await fetchPublishedTeachers();
 
   return (
     <section id="mentors" className="bg-[#0a0a0a] py-16 md:py-24 border-t border-[#1f1f1f]/50">
