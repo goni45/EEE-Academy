@@ -2,10 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { SampleHint } from "@/components/ui/prototype-mark";
-import { getPublicCourses, submitInquiry } from "@/lib/data";
+import { getPublicCourses } from "@/lib/data";
+import { submitInquiryAction, type ServerInquiryResponse } from "@/lib/actions/inquiry";
 import { formatTaka, getDisplayPrice } from "@/lib/pricing";
 import type { Course, InquiryInput } from "@/lib/types";
-import { X } from "lucide-react";
+import { Check, Copy, ExternalLink, MessageCircle, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 const empty: InquiryInput = {
@@ -38,8 +39,10 @@ export function InquiryForm({
     course_id: course?.id ?? "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [generalError, setGeneralError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [prototypeDone, setPrototypeDone] = useState(false);
+  const [confirmedData, setConfirmedData] = useState<ServerInquiryResponse | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const selected =
     courses.find((item) => item.id === values.course_id) ?? course ?? null;
@@ -49,34 +52,123 @@ export function InquiryForm({
     setValues((current) => ({ ...current, [key]: value }));
   }
 
-  function onSubmit(event: FormEvent) {
+  async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setPending(true);
-    const result = submitInquiry(values);
-    setPending(false);
-    if (!result.ok && "fieldErrors" in result) {
-      setErrors(result.fieldErrors);
-      const first = Object.keys(result.fieldErrors)[0];
-      document.getElementById(first)?.focus();
-      return;
-    }
     setErrors({});
-    setPrototypeDone(true);
+    setGeneralError(null);
+    setPending(true);
+
+    // Pre-open blank tab synchronously on click to avoid browser popup blockers
+    let waWindow: Window | null = null;
+    try {
+      waWindow = window.open("", "_blank");
+    } catch {
+      // Ignored if blocked
+    }
+
+    try {
+      const result = await submitInquiryAction(values);
+      setPending(false);
+
+      if (!result.ok) {
+        waWindow?.close();
+        if (result.fieldErrors) {
+          setErrors(result.fieldErrors);
+          const first = Object.keys(result.fieldErrors)[0];
+          document.getElementById(first)?.focus();
+        } else if (result.serverError) {
+          setGeneralError(result.serverError);
+        }
+        return;
+      }
+
+      setConfirmedData(result);
+
+      // Attempt popup navigation
+      if (result.whatsappUrl && waWindow) {
+        waWindow.location.href = result.whatsappUrl;
+      }
+    } catch {
+      waWindow?.close();
+      setPending(false);
+      setGeneralError("একটি অপ্রত্যাশিত ত্রুটি ঘটেছে। দয়া করে আবার চেষ্টা করুন।");
+    }
   }
 
-  if (prototypeDone) {
+  function copyWhatsAppMessage() {
+    if (!confirmedData?.whatsappMessage) return;
+    navigator.clipboard.writeText(confirmedData.whatsappMessage);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 3000);
+  }
+
+  if (confirmedData) {
     return (
-      <div className="space-y-4" role="status">
-        <p className="font-display italic text-2xl text-text-primary">Form is valid.</p>
-        <p className="text-sm leading-relaxed text-muted">
-          The form is valid. Saving the inquiry and the WhatsApp handoff will be connected
-          during the backend phase. Opening WhatsApp does not happen in this prototype.
-        </p>
-        {onClose ? (
-          <Button variant="secondary" onClick={onClose}>
-            Close
-          </Button>
-        ) : null}
+      <div className="space-y-5" role="status">
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-400">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
+            <Check className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-text-primary">ইনকোয়ারি ডাটাবেজে সংরক্ষিত হয়েছে!</h3>
+            <p className="text-xs text-muted">
+              আইডি: <span className="font-mono text-emerald-400">{confirmedData.leadId}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-stroke bg-bg/60 p-4 space-y-2 text-sm">
+          <div className="flex justify-between items-center text-xs text-muted">
+            <span>নির্বাচিত কোর্স:</span>
+            <span className="text-text-primary font-medium">{confirmedData.courseTitle}</span>
+          </div>
+          <div className="flex justify-between items-center text-xs text-muted">
+            <span>কোর্স ফি:</span>
+            <span className="text-text-primary font-bold">৳{confirmedData.courseFee?.toLocaleString()}</span>
+          </div>
+          <p className="text-xs leading-relaxed text-muted pt-2 border-t border-stroke/60">
+            আপনার আবেদনটি ডাটাবেজে সফলভাবে যুক্ত হয়েছে। ভর্তির পরবর্তী ধাপ এবং বিকাশ/নগদ পেমেন্ট ইন্সট্রাকশন পেতে নিচের বাটনে ক্লিক করে হোয়াটসঅ্যাপে মেসেজটি পাঠিয়ে দিন।
+          </p>
+        </div>
+
+        <div className="space-y-2.5">
+          {confirmedData.whatsappUrl ? (
+            <a
+              href={confirmedData.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 font-medium text-black transition hover:bg-[#20ba59] shadow-lg shadow-[#25D366]/20"
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span>হোয়াটসঅ্যাপে মেসেজ পাঠান</span>
+              <ExternalLink className="h-4 w-4 ml-0.5 opacity-80" />
+            </a>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={copyWhatsAppMessage}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-stroke bg-surface px-4 py-2.5 text-xs text-text-primary transition hover:border-[#89AACC] hover:bg-bg"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4 text-emerald-400" />
+                <span className="text-emerald-400">মেসেজ কপি করা হয়েছে!</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4 text-muted" />
+                <span>মেসেজ টেক্সট কপি করুন (বিকল্প অপশন)</span>
+              </>
+            )}
+          </button>
+
+          {onClose ? (
+            <Button variant="ghost" onClick={onClose} className="w-full text-xs text-muted">
+              বন্ধ করুন
+            </Button>
+          ) : null}
+        </div>
       </div>
     );
   }
@@ -205,8 +297,13 @@ export function InquiryForm({
           onChange={(e) => update("website", e.target.value)}
         />
       </div>
+      {generalError ? (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400">
+          {generalError}
+        </div>
+      ) : null}
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Checking…" : "Continue"}
+        {pending ? "প্রসেসিং হচ্ছে…" : "সাবমিট করুন ও হোয়াটসঅ্যাপে যান"}
       </Button>
     </form>
   );

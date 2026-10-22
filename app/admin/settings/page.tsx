@@ -1,21 +1,47 @@
 "use client";
 
 import { getPublicSettings, saveSettings } from "@/lib/data";
+import { updateSiteSettingsAction } from "@/lib/actions/admin";
+import { createClient } from "@/lib/supabase/client";
 import type { SiteSettings } from "@/lib/types";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function AdminSettingsPage() {
   const [settings, setSettings] = useState<SiteSettings>(() => getPublicSettings());
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    async function loadDbSettings() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("*")
+          .limit(1)
+          .maybeSingle();
+
+        if (!error && data) {
+          setSettings((curr) => ({ ...curr, ...data }));
+        }
+      } catch (err) {
+        console.warn("Could not load settings from Supabase:", err);
+      }
+    }
+    loadDbSettings();
+  }, []);
 
   function update<K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) {
     setSettings((current) => ({ ...current, [key]: value }));
     setSaved(false);
   }
 
-  function handleSave(event: React.FormEvent) {
+  async function handleSave(event: React.FormEvent) {
     event.preventDefault();
+    setSaving(true);
     saveSettings(settings);
+    await updateSiteSettingsAction(settings);
+    setSaving(false);
     setSaved(true);
   }
 
@@ -115,9 +141,10 @@ export default function AdminSettingsPage() {
 
         <button
           type="submit"
-          className="rounded-full bg-text-primary px-6 py-2.5 text-sm font-medium text-bg hover:opacity-90 transition cursor-pointer"
+          disabled={saving}
+          className="rounded-full bg-text-primary px-6 py-2.5 text-sm font-medium text-bg hover:opacity-90 transition cursor-pointer disabled:opacity-50"
         >
-          Save Settings
+          {saving ? "সংরক্ষণ করা হচ্ছে…" : "Save Settings"}
         </button>
       </form>
     </div>

@@ -3,6 +3,8 @@
 import { StatusBadge } from "@/components/ui/status-badge";
 import { getLeads, getPaymentsForLead } from "@/lib/data";
 import { formatTaka } from "@/lib/pricing";
+import { createClient } from "@/lib/supabase/client";
+import { updateLeadStatusAction } from "@/lib/actions/admin";
 import type {
   CourseLead,
   EnrollmentStatus,
@@ -11,7 +13,7 @@ import type {
   Payment,
   PaymentStatus,
 } from "@/lib/types";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const leadStatuses: LeadStatus[] = ["pending", "contacted", "closed", "cancelled"];
 const paymentStatuses: PaymentStatus[] = ["not_submitted", "submitted", "verified", "rejected"];
@@ -32,6 +34,25 @@ export default function AdminLeadsPage() {
   const [paymentsDialogLead, setPaymentsDialogLead] = useState<CourseLead | null>(null);
   const [notesDraft, setNotesDraft] = useState("");
 
+  useEffect(() => {
+    async function loadLiveLeads() {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("course_leads")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          setRows(data as CourseLead[]);
+        }
+      } catch (err) {
+        console.warn("Using local leads fallback:", err);
+      }
+    }
+    loadLiveLeads();
+  }, []);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase();
     return rows.filter((lead) =>
@@ -44,6 +65,9 @@ export default function AdminLeadsPage() {
 
   function patch(id: string, update: Partial<CourseLead>) {
     setRows((current) => current.map((lead) => (lead.id === id ? { ...lead, ...update } : lead)));
+    updateLeadStatusAction(id, update).catch((err) => {
+      console.warn("Could not persist update to Supabase:", err);
+    });
   }
 
   function openNotes(lead: CourseLead) {
