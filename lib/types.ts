@@ -106,6 +106,7 @@ export interface SiteSettings {
   id: string;
   whatsapp_number: string | null;
   helpline_number: string | null;
+  messenger_url: string | null;
   support_email: string | null;
   location_address: string | null;
   map_url: string | null;

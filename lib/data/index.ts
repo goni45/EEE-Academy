@@ -73,7 +73,24 @@ export function getAllDemos(): ClassDemo[] {
 }
 
 export function getPublicSettings(): SiteSettings {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("eee_academy_site_settings");
+      if (stored) {
+        return { ...mockSettings, ...JSON.parse(stored) };
+      }
+    } catch {}
+  }
   return mockSettings;
+}
+
+export function saveSettings(settings: SiteSettings): void {
+  if (typeof window !== "undefined") {
+    try {
+      localStorage.setItem("eee_academy_site_settings", JSON.stringify(settings));
+      window.dispatchEvent(new Event("eee_settings_updated"));
+    } catch {}
+  }
 }
 
 export function getLeads(): CourseLead[] {

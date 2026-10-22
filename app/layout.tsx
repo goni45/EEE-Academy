@@ -1,3 +1,4 @@
+import { FloatingContact } from "@/components/public/floating-contact";
 import { Loader } from "@/components/public/loader";
 import { SmoothScroll } from "@/components/providers/smooth-scroll";
 import type { Metadata } from "next";
@@ -56,6 +57,7 @@ export default function RootLayout({
         </a>
         <Loader />
         <SmoothScroll>{children}</SmoothScroll>
+        <FloatingContact />
       </body>
     </html>
   );
