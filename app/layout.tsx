@@ -1,4 +1,5 @@
 import { Loader } from "@/components/public/loader";
+import { SmoothScroll } from "@/components/providers/smooth-scroll";
 import type { Metadata } from "next";
 import { Hind_Siliguri, Instrument_Serif, Inter } from "next/font/google";
 import type { ReactNode } from "react";
@@ -54,7 +55,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <Loader />
-        {children}
+        <SmoothScroll>{children}</SmoothScroll>
       </body>
     </html>
   );

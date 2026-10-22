@@ -22,7 +22,6 @@
 html {
   background: hsl(var(--bg));
   color: hsl(var(--text));
-  scroll-behavior: smooth;
   color-scheme: dark;
 }
 
