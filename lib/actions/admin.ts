@@ -142,10 +142,17 @@ function isUuid(id?: string): boolean {
 // Course Management Actions
 // -------------------------------------------------------------
 import type { Course, Teacher, ClassDemo } from "@/lib/types";
+import { normalizeCourse } from "@/lib/data";
 
 export async function upsertCourseAction(course: Partial<Course>) {
   const supabase = createAdminClient();
   try {
+    // Preserve image_url in features array as well (failsafe against missing column)
+    const baseFeatures = (course.features || []).filter((f) => !f.startsWith("img:"));
+    if (course.image_url) {
+      baseFeatures.push(`img:${course.image_url}`);
+    }
+
     const payload: Record<string, unknown> = {
       title: course.title,
       slug: course.slug || course.title?.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-"),
@@ -155,7 +162,7 @@ export async function upsertCourseAction(course: Partial<Course>) {
       semester: course.semester || null,
       regular_price: Number(course.regular_price) || 0,
       discount_price: course.discount_price !== null && course.discount_price !== undefined ? Number(course.discount_price) : null,
-      features: course.features || [],
+      features: baseFeatures,
       syllabus: course.syllabus || [],
       duration: course.duration || "12 weeks",
       delivery_format: course.delivery_format || "Live online classes",
@@ -168,11 +175,23 @@ export async function upsertCourseAction(course: Partial<Course>) {
       payload.id = course.id;
     }
 
-    const { data, error } = await supabase
+    // Attempt upsert with native image_url first
+    let { data, error } = await supabase
       .from("courses")
-      .upsert(payload, { onConflict: "slug" })
+      .upsert({ ...payload, image_url: course.image_url || null }, { onConflict: "slug" })
       .select()
       .single();
+
+    // If image_url column doesn't exist yet, retry without it (features still safely keeps img:<url>)
+    if (error && (error.code === "42703" || error.message.includes("image_url"))) {
+      const retry = await supabase
+        .from("courses")
+        .upsert(payload, { onConflict: "slug" })
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       return { ok: false, error: error.message };
@@ -181,7 +200,7 @@ export async function upsertCourseAction(course: Partial<Course>) {
     revalidatePath("/");
     revalidatePath("/courses");
     revalidatePath("/admin/courses");
-    return { ok: true, data: data as Course };
+    return { ok: true, data: normalizeCourse(data) };
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Course save failed";
     return { ok: false, error: message };

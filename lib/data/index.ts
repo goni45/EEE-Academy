@@ -171,6 +171,29 @@ export function categoryLabel(category: CourseCategory) {
 // -------------------------------------------------------------
 import { createClient } from "@/lib/supabase/client";
 
+export function normalizeCourse(raw: any): Course {
+  if (!raw) return raw;
+  let imageUrl: string | null = raw.image_url || null;
+  const rawFeatures: string[] = Array.isArray(raw.features) ? raw.features : [];
+  const cleanFeatures: string[] = [];
+
+  for (const f of rawFeatures) {
+    if (typeof f === "string" && f.startsWith("img:")) {
+      if (!imageUrl) {
+        imageUrl = f.slice(4).trim();
+      }
+    } else {
+      cleanFeatures.push(f);
+    }
+  }
+
+  return {
+    ...raw,
+    image_url: imageUrl,
+    features: cleanFeatures,
+  };
+}
+
 export async function fetchPublicCourses(filters: CourseFilters = {}): Promise<Course[]> {
   try {
     const supabase = createClient();
@@ -189,12 +212,12 @@ export async function fetchPublicCourses(filters: CourseFilters = {}): Promise<C
 
     const { data, error } = await query;
     if (!error && data && data.length > 0) {
-      return data as Course[];
+      return data.map(normalizeCourse);
     }
   } catch (err) {
     console.warn("fetchPublicCourses notice:", err);
   }
-  return getPublicCourses(filters);
+  return getPublicCourses(filters).map(normalizeCourse);
 }
 
 export async function fetchFeaturedCourses(): Promise<Course[]> {
@@ -213,12 +236,13 @@ export async function fetchPublicCourseBySlug(slug: string): Promise<Course | nu
       .maybeSingle();
 
     if (!error && data) {
-      return data as Course;
+      return normalizeCourse(data);
     }
   } catch (err) {
     console.warn("fetchPublicCourseBySlug notice:", err);
   }
-  return getPublicCourseBySlug(slug);
+  const fallback = getPublicCourseBySlug(slug);
+  return fallback ? normalizeCourse(fallback) : null;
 }
 
 export async function fetchPublishedTeachers(): Promise<Teacher[]> {

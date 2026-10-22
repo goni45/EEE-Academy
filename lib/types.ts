@@ -27,6 +27,7 @@ export interface Course {
   syllabus: string[];
   duration: string;
   delivery_format: string;
+  image_url?: string | null;
   is_active: boolean;
   admission_open: boolean;
   order_index: number;

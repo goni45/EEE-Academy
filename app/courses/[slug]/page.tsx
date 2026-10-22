@@ -81,6 +81,22 @@ export default function CourseDetailPage({
 
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-muted">{course.description}</p>
 
+          {/* Course Hero Banner Image */}
+          <div className="relative mt-8 h-56 sm:h-80 md:h-96 w-full overflow-hidden rounded-3xl border border-stroke bg-[#141414]">
+            <img
+              src={course.image_url || "/images/work_automotive_motion_1792603991229.jpg"}
+              alt={course.title}
+              className="h-full w-full object-cover object-center"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20" />
+            <div className="absolute inset-0 halftone-overlay opacity-20 pointer-events-none" />
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-wider text-white/80 bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                {course.department} Department · {categoryLabel(course.category)}
+              </span>
+            </div>
+          </div>
+
           {/* Pricing Card */}
           <div className="mt-8 flex flex-wrap items-baseline gap-3 rounded-2xl border border-stroke bg-surface/50 p-6">
             <div className="flex items-baseline gap-3">

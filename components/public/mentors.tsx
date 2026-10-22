@@ -31,7 +31,7 @@ export async function Mentors() {
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {teachers.map((teacher, index) => {
-              const imageSrc = mentorImages[index % mentorImages.length];
+              const imageSrc = teacher.photo_url || mentorImages[index % mentorImages.length];
               return (
                 <article
                   key={teacher.id}

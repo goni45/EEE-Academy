@@ -27,7 +27,7 @@ export function CourseCard({
   variant?: "bento" | "directory";
 }) {
   const price = getDisplayPrice(course);
-  const imageSrc = courseImages[index % courseImages.length];
+  const imageSrc = course.image_url || courseImages[index % courseImages.length];
 
   return (
     <Link

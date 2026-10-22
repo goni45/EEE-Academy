@@ -1,9 +1,16 @@
 "use client";
 
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { fetchPublishedTeachers, getAllTeachers } from "@/lib/data";
 import { upsertTeacherAction } from "@/lib/actions/admin";
 import type { Teacher } from "@/lib/types";
 import { useEffect, useState } from "react";
+
+const teacherPhotoPresets = [
+  { label: "Perspective / Mentor A", url: "/images/work_human_perspective_1792603992650.jpg" },
+  { label: "Refraction / Mentor B", url: "/images/exploration_glass_refraction_1792604010449.jpg" },
+  { label: "Modern / Editorial", url: "/images/journal_typography_editorial_1792604009966.jpg" },
+];
 
 export default function AdminTeachersPage() {
   const [rows, setRows] = useState<Teacher[]>(() => getAllTeachers());
@@ -39,7 +46,7 @@ export default function AdminTeachersPage() {
         <div>
           <h1 className="text-3xl text-text-primary">Teacher & Mentor Profiles</h1>
           <p className="mt-1 text-sm text-muted">
-            Manage teacher credentials, verified affiliations, expertise, and publication status.
+            Manage teacher credentials, photos, verified affiliations, expertise, and publication status.
           </p>
         </div>
         <button
@@ -66,10 +73,10 @@ export default function AdminTeachersPage() {
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-3xl border border-stroke bg-surface/30">
-        <table className="min-w-[850px] w-full text-left text-sm">
+        <table className="min-w-[900px] w-full text-left text-sm">
           <thead className="border-b border-stroke bg-surface/60 text-xs uppercase tracking-[0.12em] text-muted">
             <tr>
-              {["Teacher Name", "Institution / Batch", "Expertise", "Status", "Order", "Actions"].map(
+              {["Photo", "Teacher Name", "Institution / Batch", "Expertise", "Status", "Order", "Actions"].map(
                 (heading) => (
                   <th key={heading} className="px-4 py-3.5 font-medium">
                     {heading}
@@ -81,6 +88,15 @@ export default function AdminTeachersPage() {
           <tbody className="divide-y divide-stroke/60">
             {rows.map((teacher) => (
               <tr key={teacher.id} className="transition hover:bg-surface/50">
+                <td className="px-4 py-3.5">
+                  <div className="relative h-11 w-11 overflow-hidden rounded-full border border-stroke bg-bg/80">
+                    <img
+                      src={teacher.photo_url || "/images/work_human_perspective_1792603992650.jpg"}
+                      alt={teacher.name}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                </td>
                 <td className="px-4 py-3.5 font-medium text-text-primary">
                   <p>{teacher.name || "Untitled Profile"}</p>
                   <p className="text-xs text-muted">{teacher.qualifications}</p>
@@ -138,6 +154,17 @@ export default function AdminTeachersPage() {
                 ✕
               </button>
             </div>
+
+            {/* Mentor Profile Photo Upload */}
+            <ImageUploadField
+              label="Mentor Profile Photo"
+              value={editing.photo_url}
+              onChange={(url) => setEditing({ ...editing, photo_url: url })}
+              folder="teachers"
+              aspectRatio="square"
+              presets={teacherPhotoPresets}
+              hint="মেন্টরের পোর্ট্রেট ছবি আপলোড করুন অথবা প্রিসেট বেছে নিন।"
+            />
 
             <label className="block text-xs font-medium text-text-primary">
               Teacher Name *

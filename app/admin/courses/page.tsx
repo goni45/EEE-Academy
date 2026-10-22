@@ -1,11 +1,20 @@
 "use client";
 
+import { ImageUploadField } from "@/components/admin/image-upload-field";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { fetchPublicCourses, getPublicCourses } from "@/lib/data";
 import { upsertCourseAction } from "@/lib/actions/admin";
 import { formatTaka, getDisplayPrice } from "@/lib/pricing";
 import type { Course, CourseCategory } from "@/lib/types";
 import { useEffect, useState } from "react";
+
+const courseImagePresets = [
+  { label: "Circuit / Tech", url: "/images/work_automotive_motion_1792603991229.jpg" },
+  { label: "Architecture / Modern", url: "/images/work_urban_architecture_1792603991572.jpg" },
+  { label: "Human / Hands-on", url: "/images/work_human_perspective_1792603992650.jpg" },
+  { label: "Design / Minimal", url: "/images/work_brand_identity_1792603992871.jpg" },
+  { label: "Kinetic Light", url: "/images/exploration_kinetic_light_1792604010286.jpg" },
+];
 
 export default function AdminCoursesPage() {
   const [rows, setRows] = useState<Course[]>(() => getPublicCourses());
@@ -43,7 +52,7 @@ export default function AdminCoursesPage() {
         <div>
           <h1 className="text-3xl text-text-primary">Course Management</h1>
           <p className="mt-1 text-sm text-muted">
-            Create, edit, archive courses and configure fees and syllabus for students.
+            Create, edit, archive courses, upload course images, and configure fees and syllabus.
           </p>
         </div>
         <button
@@ -64,6 +73,7 @@ export default function AdminCoursesPage() {
               syllabus: ["অধ্যায় ১: বেসিক সার্কিট অ্যানালাইসিস", "অধ্যায় ২: এসি থিওরি"],
               duration: "৪ মাস",
               delivery_format: "লাইভ অনলাইন ক্লাস ও রেকর্ডেড",
+              image_url: null,
               is_active: true,
               admission_open: true,
               order_index: rows.length + 1,
@@ -77,10 +87,10 @@ export default function AdminCoursesPage() {
       </div>
 
       <div className="mt-6 overflow-x-auto rounded-3xl border border-stroke bg-surface/30">
-        <table className="min-w-[950px] w-full text-left text-sm">
+        <table className="min-w-[1000px] w-full text-left text-sm">
           <thead className="border-b border-stroke bg-surface/60 text-xs uppercase tracking-[0.12em] text-muted">
             <tr>
-              {["Course Title", "Category / Semester", "Fees", "Admission", "Status", "Order", "Actions"].map(
+              {["Poster", "Course Title", "Category / Semester", "Fees", "Admission", "Status", "Order", "Actions"].map(
                 (heading) => (
                   <th key={heading} className="px-4 py-3.5 font-medium">
                     {heading}
@@ -94,6 +104,15 @@ export default function AdminCoursesPage() {
               const price = getDisplayPrice(course);
               return (
                 <tr key={course.id} className="transition hover:bg-surface/50">
+                  <td className="px-4 py-3.5">
+                    <div className="relative h-12 w-20 overflow-hidden rounded-xl border border-stroke bg-bg/80">
+                      <img
+                        src={course.image_url || "/images/work_automotive_motion_1792603991229.jpg"}
+                        alt={course.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  </td>
                   <td className="px-4 py-3.5 font-medium text-text-primary">
                     <p>{course.title || "Untitled Course"}</p>
                     <p className="text-xs text-muted font-mono">/courses/{course.slug}</p>
@@ -218,6 +237,17 @@ function CourseEditor({
             onChange={(e) => setDraft({ ...draft, description: e.target.value })}
           />
         </label>
+
+        {/* Course Thumbnail / Poster Image Field */}
+        <ImageUploadField
+          label="Course Poster / Thumbnail Image"
+          value={draft.image_url}
+          onChange={(url) => setDraft({ ...draft, image_url: url })}
+          folder="courses"
+          aspectRatio="landscape"
+          presets={courseImagePresets}
+          hint="কোর্সের ব্যানার ছবি আপলোড করুন অথবা প্রিসেট থেকে বেছে নিন। এটি কার্ড এবং বিস্তারিত পেজে প্রদর্শিত হবে।"
+        />
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <label className="block text-xs font-medium text-text-primary">
